@@ -16,8 +16,16 @@ import SendIcon from "@mui/icons-material/Send";
 import "./globals.css";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
-
+import IsimSor from './dialog.js'
 export default function Home() {
+  const [userName, setUserName] = useState("");
+
+useEffect(() => {
+  const name = localStorage.getItem("userName");
+  if (name) {
+    setUserName(name);
+  }
+}, []);
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState([
     {
@@ -43,7 +51,7 @@ export default function Home() {
     ];
 
     try {
-      const res = await axios.post("/api/geminiapi", { prompt });
+      const res = await axios.post("/api/geminiapi", { prompt ,userName});
       const reply = res.data?.content;
 
       if (reply) {
@@ -79,12 +87,13 @@ export default function Home() {
       justifyContent: "center",
       py: 4, // dikeyde biraz nefes alma alanı, istersen 0 da yapabilirsin
     }}>
+<IsimSor/>
       <Typography
         variant={isMobile ? "h6" : "h4"}
         className="text-white text-center mb-6"
         gutterBottom
       >
-        İyi günler Vasif 👋<br />
+        İyi günler {userName && `${userName}`}  👋<br />
         Bugün sana nasıl yardımcı olabilirim?
       </Typography>
 
