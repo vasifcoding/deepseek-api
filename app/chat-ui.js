@@ -99,12 +99,12 @@ export default function Home() {
           {messages
             .filter((msg) => msg.role !== "system")
             .map((msg, index) => (
-              <Card
+              <div
                 key={index}
-                className={`mb-2 rounded-3xl ${
+                className={`mb-2 rounded-3xl max-w-full w-fit wrap-break-word whitespace-pre-wrap  ${
                   msg.role === "user"
-                    ? "ml-auto bg-blue-600  text-white"
-                    : "bg-lightGray mr-auto"
+                    ? "ml-auto bg-mediumGray  text-white"
+                    : " bg-mediumGray text-white mr-auto"
                 }`}
                 sx={{
                   maxWidth: "100%",
@@ -117,15 +117,15 @@ export default function Home() {
                 <CardContent>
                   <Typography variant="body2" component="div">
                     {msg.role === "assistant" ? (
-                      <pre style={{ margin: 0 }}>
-                        <code className="language-html">{msg.content}</code>
-                      </pre>
+                      
+                        <code className="language-html bg-mediumGray">{msg.content}</code>
+                      
                     ) : (
                       msg.content
                     )}
                   </Typography>
                 </CardContent>
-              </Card>
+              </div>
             ))}
           <div ref={chatEndRef} />
         </div>
