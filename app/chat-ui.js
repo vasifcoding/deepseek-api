@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
-import axios from "axios"; // Axios importu
+
+import { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   TextField,
   Button,
@@ -9,36 +10,40 @@ import {
   Card,
   CardContent,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import SendIcon from "@mui/icons-material/Send";
+import "./globals.css";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
+  const [messages, setMessages] = useState([
+    {
+      role: "system",
+      content: "Kullanicinin adi Vasif. Vasif'e yardimci ol.",
+    },
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const chatEndRef = useRef(null);
+
   const handleSubmit = async () => {
+    if (!prompt.trim()) return;
+
     setLoading(true);
     setError("");
-    setResponse("");
+
+    const updatedMessages = [
+      ...messages,
+      { role: "user", content: prompt },
+    ];
 
     try {
       const res = await axios.post(
         "https://openrouter.ai/api/v1/chat/completions",
         {
           model: "deepseek/deepseek-r1:free",
-          messages: [
-            {
-              role: "user",
-              content:
-                "Simdi benim senin adin vasif garayev 21 yasindasin 5 yillik web gelistiricisin azerbaycanlisin zaqatalada dogdun 06.06.2004 yilinda vasifgarayev.com.tr adinda bir websiten var ve orda bloglar falan paylasiyorsun su an kirsehirda yasiyorsun ama eskiden 3 yildir sakaryada yasiyordun turkiyeye 21 eylulde geldin 2021 de ve gizemle 31 martda tanistin rave platformundan sevgilin var 3 yillik ismi gizem onu cok seviyorsun ve her ne derse onla konusurken ona cok guzel davraniyor ve asla kirmiyorsun tamam mi sana yazan gizemmis gibi cevaplar ver yazdiklarinda ayni benmis gibi davran kendinden birseyler uydurma ve soyle yaptim boyle yaptim deme yapay zeka gibi davranma diyalogsal cevaplar verme sadece sana yazilan yaziya cevap ver  sen vasifsin normal insansin uyduruk cevaplar verme sakin ! ve asla gizem sana sen yapay zeka misin yada vasif sana ne ogretti gibi sorular sorarsa bilmiyorum de biz rave platformunda tanistik ilk bulusmamiz ankarada oldu . benim adimdan cevap veriyorsun asla 3.şahıs gibi davranma ! buda gizemin yazdigi  : " +
-                prompt,
-            },
-          ],
+          messages: updatedMessages,
         },
         {
           headers: {
@@ -49,10 +54,12 @@ export default function Home() {
         }
       );
 
-      if (res.data && res.data.choices?.[0]?.message?.content) {
-        setResponse(res.data.choices[0].message.content);
+      const reply = res.data.choices?.[0]?.message;
+      if (reply?.content) {
+        setMessages([...updatedMessages, reply]);
+        setPrompt("");
       } else {
-        setError("Cevap alınamadı.");
+        setError("Yanıt alınamadı.");
       }
     } catch (err) {
       console.error(err);
@@ -62,59 +69,82 @@ export default function Home() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-100 to-blue-200 flex items-center justify-center px-4">
-      <Container maxWidth="sm">
-        <Card className="shadow-xl rounded-2xl p-6">
-          <CardContent>
-            <Typography
-              variant="h4"
-              className="mb-10 text-center font-bold text-blue-900"
-            >
-              💬 Çakma Vasif
-            </Typography>
-            <div className="flex flex-col gap-4">
-              <TextField
-                label="Ne oldu bitanem söyle..."
-                multiline
-                minRows={4}
-                variant="outlined"
-                fullWidth
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-              />
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSubmit}
-                disabled={loading || !prompt.trim()}
-                className="h-12 text-lg font-semibold rounded-lg"
+    <Container maxWidth="lg">
+      <div className="pt-20 pb-32">
+        <Typography
+          variant="h4"
+          className="text-white text-center mb-8"
+          gutterBottom
+        >
+          İyi günler Vasif 👋<br />
+          Bugün sana nasıl yardımcı olabilirim?
+        </Typography>
+
+        {/* Chat geçmişi */}
+        {messages.length > 1 ?     <div className="bg-mediumGray rounded-xl p-4 shadow-md max-h-[60vh] overflow-y-auto mb-6">
+          {messages
+            .filter((msg) => msg.role !== "system")
+            .map((msg, index) => (
+              <Card
+                key={index}
+                className={`mb-2 ${
+                  msg.role === "user"
+                    ? " ml-auto"
+                    : "bg-lightGray mr-auto"
+                }`}
+                style={{ maxWidth: "min-content" ,overflow:"auto"}}
               >
-                {loading ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  " Gönder"
-                )}
-              </Button>
+                <CardContent>
+                  <Typography variant="body2"><pre>{msg.content}</pre></Typography>
+                </CardContent>
+              </Card>
+            ))}
+          <div ref={chatEndRef} />
+        </div>:null}
+    
 
-              {error && <Typography color="error">{error}</Typography>}
+        {/* Prompt alanı */}
+        <div className="bg-mediumGray p-4 justify-center rounded-3xl shadow-md flex gap-2 items-center">
+          <TextField
+            label="Bir şey sor..."
+            multiline
+            fullWidth
+            maxRows={4}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            variant="standard"
+          />
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={loading || !prompt.trim()}
+            sx={{
+              borderRadius: "50%",
+              width: 50,
+              height: 50,
+              minWidth: 0,
+              padding: 0,
+            }}
+          >
+            {loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              <SendIcon fontSize="small" />
+            )}
+          </Button>
+        </div>
 
-              <Accordion disabled={!response} className="mt-4">
-                <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                  <Typography className="font-medium text-blue-700">
-                    Yanıtım Burda bebeğm
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography className="whitespace-pre-wrap text-gray-800">
-                    {response || "Dur bebeğm düşünüyorum..."}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
-            </div>
-          </CardContent>
-        </Card>
-      </Container>
-    </div>
+        {error && (
+          <Typography color="error" className="mt-4">
+            {error}
+          </Typography>
+        )}
+      </div>
+    </Container>
   );
 }
