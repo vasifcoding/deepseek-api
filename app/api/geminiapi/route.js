@@ -11,7 +11,7 @@ export async function POST(req) {
     // Gemini modelini kullanarak içerik oluşturuyoruz
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash", // Model adı
-      contents: prompt, // Prompt
+      contents:"kullanicinin adi vasif  prompt : "  +prompt, // Prompt
     });
 
     // Yanıtı döndürüyoruz

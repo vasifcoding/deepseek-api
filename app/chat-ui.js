@@ -72,7 +72,13 @@ export default function Home() {
   }, [messages]);
 
   return (
-    <Container maxWidth="md" sx={{ pt: 10, pb: 20 }}>
+    <Container   maxWidth="md" sx={{
+      minHeight: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      justifyContent: "center",
+      py: 4, // dikeyde biraz nefes alma alanı, istersen 0 da yapabilirsin
+    }}>
       <Typography
         variant={isMobile ? "h6" : "h4"}
         className="text-white text-center mb-6"
@@ -85,7 +91,7 @@ export default function Home() {
       {/* Chat geçmişi */}
       {messages.length > 1 && (
         <div
-          className="bg-mediumGray rounded-xl p-3 shadow-md overflow-y-auto mb-6"
+          className=" rounded-xl p-3 overflow-y-auto mb-6"
           style={{
             maxHeight: isMobile ? "50vh" : "60vh",
           }}
@@ -95,9 +101,9 @@ export default function Home() {
             .map((msg, index) => (
               <Card
                 key={index}
-                className={`mb-2 ${
+                className={`mb-2 rounded-3xl ${
                   msg.role === "user"
-                    ? "ml-auto bg-blue-600 text-white"
+                    ? "ml-auto bg-blue-600  text-white"
                     : "bg-lightGray mr-auto"
                 }`}
                 sx={{
