@@ -9,6 +9,8 @@ body {
   --color-black: #18191b;
   --color-white: #FFFFFF;
 }
+@import 'highlight.js/styles/github-dark.css';
+
 @layer base {
  
   body {

@@ -10,9 +10,12 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  useMediaQuery
 } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import "./globals.css";
+import hljs from "highlight.js";
+import "highlight.js/styles/github-dark.css";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
@@ -24,8 +27,9 @@ export default function Home() {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
   const chatEndRef = useRef(null);
+
+  const isMobile = useMediaQuery("(max-width:600px)");
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return;
@@ -39,24 +43,14 @@ export default function Home() {
     ];
 
     try {
-      const res = await axios.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        {
-          model: "deepseek/deepseek-r1:free",
-          messages: updatedMessages,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization:
-              "Bearer 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",
-          },
-        }
-      );
+      const res = await axios.post("/api/geminiapi", { prompt });
+      const reply = res.data?.content;
 
-      const reply = res.data.choices?.[0]?.message;
-      if (reply?.content) {
-        setMessages([...updatedMessages, reply]);
+      if (reply) {
+        setMessages([
+          ...updatedMessages,
+          { role: "assistant", content: reply },
+        ]);
         setPrompt("");
       } else {
         setError("Yanıt alınamadı.");
@@ -73,20 +67,29 @@ export default function Home() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  return (
-    <Container maxWidth="lg">
-      <div className="pt-20 pb-32">
-        <Typography
-          variant="h4"
-          className="text-white text-center mb-8"
-          gutterBottom
-        >
-          İyi günler Vasif 👋<br />
-          Bugün sana nasıl yardımcı olabilirim?
-        </Typography>
+  useEffect(() => {
+    hljs.highlightAll();
+  }, [messages]);
 
-        {/* Chat geçmişi */}
-        {messages.length > 1 ?     <div className="bg-mediumGray rounded-xl p-4 shadow-md max-h-[60vh] overflow-y-auto mb-6">
+  return (
+    <Container maxWidth="md" sx={{ pt: 10, pb: 20 }}>
+      <Typography
+        variant={isMobile ? "h6" : "h4"}
+        className="text-white text-center mb-6"
+        gutterBottom
+      >
+        İyi günler Vasif 👋<br />
+        Bugün sana nasıl yardımcı olabilirim?
+      </Typography>
+
+      {/* Chat geçmişi */}
+      {messages.length > 1 && (
+        <div
+          className="bg-mediumGray rounded-xl p-3 shadow-md overflow-y-auto mb-6"
+          style={{
+            maxHeight: isMobile ? "50vh" : "60vh",
+          }}
+        >
           {messages
             .filter((msg) => msg.role !== "system")
             .map((msg, index) => (
@@ -94,57 +97,71 @@ export default function Home() {
                 key={index}
                 className={`mb-2 ${
                   msg.role === "user"
-                    ? " ml-auto"
+                    ? "ml-auto bg-blue-600 text-white"
                     : "bg-lightGray mr-auto"
                 }`}
-                style={{ maxWidth: "min-content" ,overflow:"auto"}}
+                sx={{
+                  maxWidth: "100%",
+                  width: "fit-content",
+                  overflowWrap: "break-word",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
               >
                 <CardContent>
-                  <Typography variant="body2"><pre>{msg.content}</pre></Typography>
+                  <Typography variant="body2" component="div">
+                    {msg.role === "assistant" ? (
+                      <pre style={{ margin: 0 }}>
+                        <code className="language-html">{msg.content}</code>
+                      </pre>
+                    ) : (
+                      msg.content
+                    )}
+                  </Typography>
                 </CardContent>
               </Card>
             ))}
           <div ref={chatEndRef} />
-        </div>:null}
-    
-
-        {/* Prompt alanı */}
-        <div className="bg-mediumGray p-4 justify-center rounded-3xl shadow-md flex gap-2 items-center">
-          <TextField
-            label="Bir şey sor..."
-            multiline
-            fullWidth
-            maxRows={4}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            variant="standard"
-          />
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={loading || !prompt.trim()}
-            sx={{
-              borderRadius: "50%",
-              width: 50,
-              height: 50,
-              minWidth: 0,
-              padding: 0,
-            }}
-          >
-            {loading ? (
-              <CircularProgress size={20} color="inherit" />
-            ) : (
-              <SendIcon fontSize="small" />
-            )}
-          </Button>
         </div>
+      )}
 
-        {error && (
-          <Typography color="error" className="mt-4">
-            {error}
-          </Typography>
-        )}
+      {/* Prompt alanı */}
+      <div className="bg-mediumGray p-3 rounded-3xl shadow-md flex gap-2 items-end flex-col sm:flex-row">
+        <TextField
+          label="Bir şey sor..."
+          multiline
+          fullWidth
+          maxRows={4}
+          value={prompt}
+          onChange={(e) => setPrompt(e.target.value)}
+          variant="standard"
+        />
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={loading || !prompt.trim()}
+          sx={{
+            borderRadius: "50%",
+            width: 40,
+            height: 40,
+            minWidth: 0,
+            padding: 0,
+            mt: isMobile ? 1 : 0,
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={20} color="inherit" />
+          ) : (
+            <SendIcon fontSize="small" />
+          )}
+        </Button>
       </div>
+
+      {error && (
+        <Typography color="error" className="mt-4">
+          {error}
+        </Typography>
+      )}
     </Container>
   );
 }
